@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#0f172a" />
+<title>교대근무 플러스·마이너스달 계산기 v20</title>
+<style>
+  :root {
+    --bg: #f1f5f9;
+    --surface: #ffffff;
+    --surface-2: #f8fafc;
+    --border: #e2e8f0;
+    --grid-line: #0f172a;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --navy: #0f172a;
+    --navy-light: #1e293b;
+    --primary: #2563eb;
+    --primary-bg: #dbeafe;
+    --green: #15803d;
+    --green-bg: #dcfce7;
+    --red: #b91c1c;
+    --red-bg: #fee2e2;
+    --amber: #b45309;
+    --amber-bg: #fef3c7;
+    --purple: #6d28d9;
+    --purple-bg: #ede9fe;
+    --pink: #be185d;
+    --pink-bg: #fce7f3;
+    --teal: #0f766e;
+    --teal-bg: #ccfbf1;
+    --indigo: #3730a3;
+    --indigo-bg: #e0e7ff;
+    --cyan: #155e75;
+    --cyan-bg: #cffafe;
+    --orange: #c2410c;
+    --orange-bg: #ffedd5;
+    --gray-badge: #475569;
+    --gray-badge-bg: #e2e8f0;
+    --radius: 14px;
+    --shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  }
+
+  body.dark-mode {
+    --bg: #0b0f19;
+    --surface: #1e293b;
+    --surface-2: #0f172a;
+    --border: #334155;
+    --grid-line: #ffffff;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --navy: #1e293b;
+    --navy-light: #334155;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Malgun Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.4;
+    padding-bottom: 84px;
+    overflow-x: hidden;
+  }
+
+  .app-container {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--bg);
+    padding: 0 6px;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .header {
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 16px 12px;
+    margin: 0 -6px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .header-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .header-actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+  .header-btn {
+    background: rgba(255,255,255,0.14);
+    border: none;
+    color: #fff;
+    padding: 6px 9px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .header-btn:active {
+    background: rgba(255,255,255,0.25);
+  }
+
+  .month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    background: var(--navy-light);
+    border-radius: 10px;
+    padding: 5px 10px;
+  }
+  .month-nav button {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .month-nav button:active {
+    background: rgba(255,255,255,0.12);
+  }
+  .month-label {
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  /* Views */
+  .view {
+    display: none;
+    padding: 12px 6px;
+  }
+  .view.active {
+    display: block;
+  }
+
+  /* Summary Dashboard Card */
+  .summary-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 15px;
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+  }
+  
+  /* 기본근무 - 법정기준 대조 레이아웃 (심플한 차이 표시 및 방점) */
+  .compare-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .compare-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .compare-item .c-label {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .compare-item .c-val {
+    font-size: 15px;
+    font-weight: 800;
+    margin-top: 1px;
+  }
+  .compare-dot {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+  .compare-right {
+    text-align: right;
+  }
+  .compare-right .c-label {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .compare-right .c-val {
+    font-size: 17px;
+    font-weight: 900;
+    margin-top: 1px;
+  }
+  .text-plus { color: var(--green); }
+  .text-minus { color: var(--red); }
+  body.dark-mode .text-plus { color: #4ade80; }
+  body.dark-mode .text-minus { color: #f87171; }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    background: var(--surface-2);
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .metric-box {
+    text-align: center;
+  }
+  .metric-label {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .metric-val {
+    font-size: 14px;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  /* Overtime Cap Gauge Bar */
+  .cap-box {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+  }
+  .cap-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+  .cap-bar-bg {
+    width: 100%;
+    height: 10px;
+    background: var(--surface-2);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .cap-bar-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 999px;
+    transition: width 0.25s ease;
+  }
+  .cap-bar-fill.full {
+    background: var(--green);
+  }
+
+  /* Pay Breakdown Box */
+  .pay-breakdown {
+    margin-top: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .pay-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .pay-row.total {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 0;
+  }
+
+  /* Calendar Card */
+  .cal-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 12px 8px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .cal-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .rule-note {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    padding: 7px 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+    line-height: 1.4;
+  }
+  .dow-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+  .dow-sun { color: var(--red); }
+  .dow-sat { color: var(--primary); }
+  body.dark-mode .dow-sun { color: #f87171; }
+  body.dark-mode .dow-sat { color: #60a5fa; }
+
+  .days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .day-cell {
+    min-height: 68px;
+    border-radius: 9px;
+    border: 1px solid var(--grid-line);
+    padding: 3px 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .day-cell > * {
+    pointer-events: none;
+  }
+  .day-cell:active {
+    transform: scale(0.96);
+  }
+  .day-cell.empty {
+    border: none !important;
+    background: transparent;
+    cursor: default;
+  }
+  .day-cell.today {
+    border: 2px solid var(--primary) !important;
+  }
+  .day-cell.overridden {
+    box-shadow: inset 0 0 0 1.5px var(--amber);
+  }
+  .day-num {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .day-sun { color: var(--red); }
+  .day-sat { color: var(--primary); }
+  body.dark-mode .day-sun { color: #f87171; }
+  body.dark-mode .day-sat { color: #60a5fa; }
+
+  .shift-pill-wrapper {
+    position: relative;
+    width: 92%;
+    display: flex;
+    justify-content: center;
+  }
+  .shift-pill {
+    font-size: 11px;
+    font-weight: 800;
+    width: 100%;
+    text-align: center;
+    padding: 2px 1px;
+    border-radius: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .edit-badge-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 6px;
+    height: 6px;
+    background: var(--amber);
+    border-radius: 50%;
+    border: 1px solid var(--surface);
+  }
+  
+  .day-bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 2px;
+    min-height: 13px;
+  }
+  .extra-tag {
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--amber);
+    line-height: 1;
+  }
+  .memo-tag {
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--purple);
+    background: var(--purple-bg);
+    padding: 1px 3px;
+    border-radius: 4px;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.1;
+  }
+
+  /* 라이트모드 근무 칩 테마 */
+  .theme-green { background: var(--green-bg); color: var(--green); }
+  .theme-blue { background: var(--primary-bg); color: var(--primary); }
+  .theme-gray { background: var(--gray-badge-bg); color: var(--gray-badge); }
+  .theme-amber { background: var(--amber-bg); color: var(--amber); }
+  .theme-purple { background: var(--purple-bg); color: var(--purple); }
+  .theme-pink { background: var(--pink-bg); color: var(--pink); }
+  .theme-teal { background: var(--teal-bg); color: var(--teal); }
+  .theme-indigo { background: var(--indigo-bg); color: var(--indigo); }
+  .theme-cyan { background: var(--cyan-bg); color: var(--cyan); }
+  .theme-orange { background: var(--orange-bg); color: var(--orange); }
+  .theme-red { background: var(--red-bg); color: var(--red); }
+
+  /* 다크모드 전용 고대비 근무 칩 테마 */
+  body.dark-mode .theme-green { background: rgba(21, 128, 61, 0.35); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.45); }
+  body.dark-mode .theme-blue { background: rgba(37, 99, 235, 0.35); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.45); }
+  body.dark-mode .theme-indigo { background: rgba(79, 70, 229, 0.4); color: #c4b5fd; border: 1px solid rgba(196, 181, 253, 0.45); }
+  body.dark-mode .theme-gray { background: rgba(71, 85, 105, 0.4); color: #e2e8f0; border: 1px solid rgba(226, 232, 240, 0.35); }
+  body.dark-mode .theme-amber { background: rgba(180, 83, 9, 0.35); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.45); }
+  body.dark-mode .theme-purple { background: rgba(109, 40, 217, 0.35); color: #d8b4fe; border: 1px solid rgba(216, 180, 254, 0.45); }
+  body.dark-mode .theme-pink { background: rgba(190, 24, 93, 0.35); color: #f472b6; border: 1px solid rgba(244, 114, 182, 0.45); }
+  body.dark-mode .theme-teal { background: rgba(15, 118, 110, 0.35); color: #2dd4bf; border: 1px solid rgba(45, 212, 191, 0.45); }
+  body.dark-mode .theme-cyan { background: rgba(21, 94, 117, 0.35); color: #22d3ee; border: 1px solid rgba(34, 211, 238, 0.45); }
+  body.dark-mode .theme-orange { background: rgba(194, 65, 12, 0.35); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.45); }
+  body.dark-mode .theme-red { background: rgba(185, 28, 28, 0.35); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.45); }
+
+  /* Settings & Annual Cards */
+  .section-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 15px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .form-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+  }
+  .form-label {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .form-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  input[type="date"], input[type="number"], input[type="text"], select {
+    padding: 7px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--surface-2);
+    color: var(--text);
+    width: 100%;
+  }
+  input[type="number"] {
+    text-align: right;
+  }
+
+  /* Pattern Builder */
+  .preset-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .preset-btn {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .preset-btn:active {
+    background: var(--primary-bg);
+    border-color: var(--primary);
+  }
+  .pattern-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+    min-height: 44px;
+    padding: 8px;
+    background: var(--surface-2);
+    border-radius: 10px;
+    border: 1px dashed var(--border);
+  }
+  .slot-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .slot-chip span.idx {
+    font-size: 10px;
+    opacity: 0.75;
+  }
+
+  .add-btns {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .add-btn {
+    padding: 10px 4px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  /* Code Cards List in Settings */
+  .code-item-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+  .code-item-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .code-item-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .del-code-btn {
+    background: var(--red-bg);
+    color: var(--red);
+    border: none;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-left: auto;
+  }
+
+  .new-code-box {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 12px;
+  }
+  .new-code-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+  .new-code-field {
+    margin-bottom: 8px;
+  }
+  .new-code-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+  }
+  .new-code-grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .new-code-time-input {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    background: var(--surface);
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .new-code-time-input input {
+    border: none;
+    background: transparent;
+    padding: 0;
+    width: 100%;
+    font-weight: 700;
+    text-align: right;
+  }
+
+  /* Holiday Accordion Tree Styles (연도별 트리 아코디언) */
+  .holiday-tree-container {
+    max-height: 320px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-2);
+    margin-bottom: 10px;
+  }
+  .year-accordion-item {
+    border-bottom: 1px solid var(--border);
+  }
+  .year-accordion-item:last-child {
+    border-bottom: none;
+  }
+  .year-accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    user-select: none;
+  }
+  .year-accordion-header:active {
+    background: var(--primary-bg);
+  }
+  .year-accordion-body {
+    display: none;
+    padding: 8px;
+    background: var(--surface-2);
+  }
+  .year-accordion-body.open {
+    display: block;
+  }
+  .holiday-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 6px;
+  }
+  .holiday-item:last-child {
+    margin-bottom: 0;
+  }
+  .holiday-date-input {
+    width: 120px !important;
+    padding: 4px 6px !important;
+    font-size: 11.5px !important;
+  }
+  .holiday-name-input {
+    flex: 1;
+    padding: 4px 6px !important;
+    font-size: 11.5px !important;
+  }
+  .holiday-del-btn {
+    background: var(--red-bg);
+    color: var(--red);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 7px;
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* Annual Summary List */
+  .annual-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .annual-row:last-child { border-bottom: none; }
+  .annual-row:active { background: var(--surface-2); }
+
+  /* Bottom Tab Bar */
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    height: 64px;
+    z-index: 30;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .tab-btn.active {
+    color: var(--primary);
+  }
+  .tab-icon {
+    font-size: 19px;
+  }
+
+  /* Modal */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    z-index: 50;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-backdrop.open {
+    display: flex;
+  }
+  .modal-sheet {
+    background: var(--surface);
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 18px 28px;
+    animation: slideUp 0.2s ease-out;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .modal-title {
+    font-size: 16px;
+    font-weight: 800;
+  }
+  .modal-close {
+    background: var(--surface-2);
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .modal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .choice-btn {
+    padding: 10px 4px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    text-align: center;
+  }
+  .choice-btn.selected {
+    border-color: var(--text);
+  }
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-outline {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .quick-ot-box {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 10px;
+  }
+  .quick-ot-chips {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .quick-ot-chip {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 2px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    color: var(--text);
+  }
+  .quick-ot-chip:active, .quick-ot-chip.selected {
+    background: var(--primary-bg);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+</style>
+</head>
+<body>
+<div class="app-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-title">교대근무 플러스·마이너스달 계산기 v20</div>
+        <div class="header-sub" id="headerPatternInfo">패턴: 주 → 야 → 심 → 휴 → 비 (10일 주기)</div>
+      </div>
+      <div class="header-actions">
+        <button onclick="clearCacheAndReload()" class="header-btn" title="캐시 및 저장 데이터 초기화">🔄 초기화</button>
+        <button onclick="toggleDarkMode()" id="themeToggleBtn" class="header-btn">🌙 다크</button>
+        <button onclick="goToday()" class="header-btn">오늘</button>
+      </div>
+    </div>
+    <div class="month-nav" id="monthNavBar">
+      <button onclick="changeMonth(-1)">◀</button>
+      <div class="month-label" id="currentMonthLabel">2026년 11월</div>
+      <button onclick="changeMonth(1)">▶</button>
+    </div>
+  </header>
+
+  <!-- VIEW 1: 달력 & 월간 요약 -->
+  <main id="view-calendar" class="view active">
+    <div class="summary-card">
+      <!-- 기본근무 - 법정기준 대조 레이아웃 (방점 및 플러스/마이너스 색상) -->
+      <div class="compare-box">
+        <div class="compare-left" style="gap: 12px; align-items: center;">
+          <div class="compare-item">
+            <div class="c-label">기본근무</div>
+            <div class="c-val" id="patternHoursVal">172.0h</div>
+          </div>
+          <div style="font-size: 15px; font-weight: 700; color: var(--text-muted); margin: 0 2px;">-</div>
+          <div class="compare-item">
+            <div class="c-label">법정기준</div>
+            <div class="c-val" id="legalHoursVal">168.0h</div>
+          </div>
+        </div>
+        <div class="compare-right">
+          <div class="c-label" id="monthStatusLabel">플러스달</div>
+          <div class="c-val text-plus" id="monthDiffValue">+4.0h</div>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-label">실제 인정시간 (공제 반영)</div>
+          <div class="metric-val" id="actualHoursVal">158.0h</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">야간 / 휴일일수</div>
+          <div class="metric-val" id="nightHolidayVal">49.0h / 2일</div>
+        </div>
+      </div>
+
+      <!-- 상한 시간 게이지 바 -->
+      <div class="cap-box">
+        <div class="cap-header">
+          <span style="font-weight:700;color:var(--text);">초과근무 상한 현황 (<span id="capText">4.0 / 67h</span>)</span>
+          <span style="font-weight:700;color:var(--primary);" id="capRemainText">잔여 63.0h</span>
+        </div>
+        <div class="cap-bar-bg">
+          <div class="cap-bar-fill" id="capBarFill" style="width: 10%;"></div>
+        </div>
+      </div>
+
+      <!-- 수당 세부 내역 -->
+      <div class="pay-breakdown">
+        <div class="pay-row">
+          <span>시간외수당 (<span id="otPaidHours">0.0h</span>)</span>
+          <strong id="otPayVal">0원</strong>
+        </div>
+        <div class="pay-row">
+          <span>야간근무수당 (<span id="nightPaidHours">0.0h</span>)</span>
+          <strong id="nightPayVal">0원</strong>
+        </div>
+        <div class="pay-row">
+          <span>휴일근무수당 (<span id="holPaidDays">0일</span>)</span>
+          <strong id="holPayVal">0원</strong>
+        </div>
+        <div class="pay-row total">
+          <span>예상 총 수당 합계</span>
+          <span style="color:var(--primary);" id="totalPayVal">0원</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cal-card">
+      <div class="cal-hint">💡 날짜를 터치하면 근무 변경, 공휴일 지정 및 메모를 설정할 수 있습니다</div>
+      <div class="rule-note">
+        📌 <strong>산정 기준 (v20)</strong><br/>
+        • <strong>주말·공휴일 주간</strong>: 휴일근무수당 1일 지급 및 시간외수당 8h 공제 반영<br/>
+        • <strong>휴일야간 · 평일야간</strong>: 휴일수당 미지급, 공제 없이 전부 인정 + 야간수당 별도 지급
+      </div>
+      <div class="dow-grid">
+        <div class="dow-sun">일</div>
+        <div>월</div>
+        <div>화</div>
+        <div>수</div>
+        <div>목</div>
+        <div>금</div>
+        <div class="dow-sat">토</div>
+      </div>
+      <div class="days-grid" id="calendarGrid"></div>
+    </div>
+  </main>
+
+  <!-- VIEW 2: 연간 플러스/마이너스달 요약 -->
+  <main id="view-annual" class="view">
+    <div class="section-card">
+      <div class="section-title">
+        <span id="annualTitle">2026년 연간 요약</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+        월 항목을 터치하면 해당 월 달력으로 바로 이동합니다.
+      </div>
+      <div id="annualList"></div>
+    </div>
+  </main>
+
+  <!-- VIEW 3: 교대패턴 및 공휴일 연도별 트리 관리 설정 -->
+  <main id="view-settings" class="view">
+    <div class="section-card">
+      <div class="section-title">1. 내 교대패턴 및 시작일 설정</div>
+      <div class="form-row">
+        <div>
+          <div class="form-label">패턴 1일차 시작일</div>
+          <div class="form-desc">아래 패턴의 첫 번째 근무가 시작되는 날짜</div>
+        </div>
+        <input type="date" id="startDateInput" style="width:140px;" onchange="saveSettings()" />
+      </div>
+
+      <div style="margin-top:12px;margin-bottom:6px;font-size:13px;font-weight:700;">자주 쓰는 패턴 프리셋</div>
+      <div class="preset-btns">
+        <button class="preset-btn" onclick="applyPreset(['주','야','심','휴','비','주','야','휴','비','비'])">5조3교대 (주야심휴비주야휴비비)</button>
+        <button class="preset-btn" onclick="applyPreset(['주','야','비','휴'])">4조2교대 (주야비휴)</button>
+        <button class="preset-btn" onclick="applyPreset(['주','주','야','야','비','비'])">3조2교대 (주주야야비비)</button>
+        <button class="preset-btn" onclick="applyPreset(['당','비','휴'])">당비휴 (24시간)</button>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:13px;font-weight:700;">현재 패턴 (<span id="patternLenText">10</span>일 주기)</span>
+        <button onclick="clearPattern()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;">전체 비우기</button>
+      </div>
+      <div class="pattern-slots" id="patternSlots"></div>
+
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">아래 버튼을 눌러 패턴 뒤에 근무를 추가하세요 (칩 터치 시 삭제)</div>
+      <div class="add-btns" id="patternAddBtns"></div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">2. 근무코드 관리</div>
+      <div id="codeCardsList"></div>
+
+      <!-- 새 근무코드 추가 폼 -->
+      <div class="new-code-box">
+        <div class="new-code-title">➕ 새 근무코드 추가</div>
+        <div style="display:grid;grid-template-columns: 84px 1fr; gap:6px; margin-bottom:8px;">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:3px;">약어(1~3글자)</label>
+            <input type="text" id="newCodeKey" maxlength="3" placeholder="예:반가" style="text-align:center;" />
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:3px;">근무 명칭</label>
+            <input type="text" id="newCodeName" maxlength="10" placeholder="예: 반일연가" />
+          </div>
+        </div>
+
+        <div class="new-code-field">
+          <label>색상 테마 선택</label>
+          <select id="newCodeTheme">
+            <option value="purple">보라색</option><option value="pink">분홍색</option><option value="teal">청록색</option>
+            <option value="indigo">남색</option><option value="cyan">하늘색</option><option value="orange">주황색</option>
+            <option value="amber">황토색</option><option value="green">초록색</option><option value="blue">파랑색</option>
+            <option value="red">빨강색</option><option value="gray">회색</option>
+          </select>
+        </div>
+
+        <div class="new-code-grid2">
+          <div class="new-code-field" style="margin-bottom:0;">
+            <label>기본 인정시간</label>
+            <div class="new-code-time-input"><input type="number" step="0.5" id="newCodeBase" value="8.0" /><span>h</span></div>
+          </div>
+          <div class="new-code-field" style="margin-bottom:0;">
+            <label>야간 인정시간</label>
+            <div class="new-code-time-input"><input type="number" step="0.5" id="newCodeNight" value="0.0" /><span>h</span></div>
+          </div>
+        </div>
+        <button onclick="addNewWorkCode()" style="width:100%;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px;">새 근무코드 추가하기</button>
+      </div>
+    </div>
+
+    <!-- 공휴일 관리 (연도별 트리 아코디언 방식) -->
+    <div class="section-card">
+      <div class="section-title">
+        <span>3. 공휴일 관리 (2026~2040)</span>
+        <button onclick="resetHolidaysOnly()" style="background:none;border:none;color:var(--primary);font-size:11px;font-weight:700;cursor:pointer;">기본 복원</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
+        연도별 폴더(트리)를 터치하여 펼치고, 해당 연도의 공휴일을 확인·수정하거나 추가할 수 있습니다.
+      </div>
+      
+      <div class="holiday-tree-container" id="holidayTreeContainer"></div>
+
+      <div class="new-code-box" style="margin-top:8px;">
+        <div class="new-code-title">➕ 신규 공휴일 추가</div>
+        <div style="display:grid;grid-template-columns: 132px 1fr; gap:6px; margin-bottom:8px;">
+          <div><input type="date" id="newHolDate" /></div>
+          <div><input type="text" id="newHolName" maxlength="12" placeholder="공휴일 명칭" /></div>
+        </div>
+        <button onclick="addHoliday()" style="width:100%;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:9px 0;font-size:13px;font-weight:700;cursor:pointer;">공휴일 추가하기</button>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">4. 기준시간 · 수당 단가 설정</div>
+      <div class="form-row">
+        <div>
+          <div class="form-label">평일 1일 법정 기준시간</div>
+          <div class="form-desc">공무원·일반 기준 8시간</div>
+        </div>
+        <input type="number" step="0.5" id="dailyStdInput" style="width:80px;" onchange="saveSettings()" />
+      </div>
+      <div class="form-row">
+        <div>
+          <div class="form-label">월 초과근무 인정 상한(h)</div>
+          <div class="form-desc">현업공무원 67h 등</div>
+        </div>
+        <input type="number" step="1" id="otCapInput" style="width:80px;" onchange="saveSettings()" />
+      </div>
+      <div class="form-row">
+        <div>
+          <div class="form-label">시간외수당 단가(원)</div>
+        </div>
+        <input type="number" step="100" id="hourlyRateInput" style="width:95px;" onchange="saveSettings()" />
+      </div>
+      <div class="form-row">
+        <div>
+          <div class="form-label">야간수당 단가(원)</div>
+        </div>
+        <input type="number" step="100" id="nightRateInput" style="width:95px;" onchange="saveSettings()" />
+      </div>
+      <div class="form-row">
+        <div>
+          <div class="form-label">휴일근무수당 1일 단가(원)</div>
+        </div>
+        <input type="number" step="1000" id="holidayRateInput" style="width:95px;" onchange="saveSettings()" />
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn-outline" style="margin-top:0;flex:1;" onclick="resetCurrentMonthOverrides()">이번 달 수정내역 초기화</button>
+        <button class="btn-outline" style="margin-top:0;flex:1;color:var(--red);border-color:var(--red);" onclick="clearCacheAndReload()">전체 데이터 완전초기화</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" id="tab-calendar" onclick="switchTab('calendar')">
+      <span class="tab-icon">📅</span><span>근무달력</span>
+    </button>
+    <button class="tab-btn" id="tab-annual" onclick="switchTab('annual')">
+      <span class="tab-icon">📊</span><span>연간요약</span>
+    </button>
+    <button class="tab-btn" id="tab-settings" onclick="switchTab('settings')">
+      <span class="tab-icon">⚙️</span><span>설정</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Modal for Individual Day Override, Memo & Holiday Toggle -->
+<div class="modal-backdrop" id="dayModal" onclick="closeModal(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modalDateTitle">2026년 11월 11일 (수)</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;" id="modalDefaultInfo">기본 패턴 근무</div>
+
+    <!-- 공휴일 지정/해제 토글 버튼 추가 -->
+    <div style="margin-bottom:12px;background:var(--surface-2);padding:10px;border-radius:10px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:12px;font-weight:700;" id="modalHolidayStatusText">일반일 (공휴일 아님)</div>
+        <div style="font-size:10.5px;color:var(--text-muted);" id="modalHolidayNameSub">공휴일로 지정하면 주말/휴일 수당 산정에 반영됩니다</div>
+      </div>
+      <button id="modalHolidayToggleBtn" onclick="toggleModalHoliday()" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:var(--primary-bg);color:var(--primary);">공휴일 지정</button>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px;">근무 형태 선택</div>
+    <div class="modal-grid" id="modalCodeChoices"></div>
+
+    <div class="quick-ot-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:800;color:var(--primary);" id="quickOtTitle">⏱️ 추가시간 조정</span>
+        <span style="font-size:11px;color:var(--text-muted);" id="quickOtCurrentHint">기본 8.0h + 추가 0h</span>
+      </div>
+      <div class="quick-ot-chips">
+        <button class="quick-ot-chip" onclick="setExtraTime(0)">+0h</button>
+        <button class="quick-ot-chip" onclick="setExtraTime(2)">+2h</button>
+        <button class="quick-ot-chip" onclick="setExtraTime(4)">+4h</button>
+        <button class="quick-ot-chip" onclick="setExtraTime(6)">+6h</button>
+        <button class="quick-ot-chip" onclick="setExtraTime(8)">+8h</button>
+      </div>
+    </div>
+
+    <div class="form-row" style="margin-top:10px;background:var(--surface-2);padding:10px;border-radius:10px;">
+      <div>
+        <div class="form-label">직접 입력 추가 시간 (h)</div>
+      </div>
+      <input type="number" step="0.5" min="0" max="24" id="modalExtraHours" style="width:80px;" value="0" oninput="syncExtraChipState()" />
+    </div>
+
+    <div class="form-row" style="margin-top:10px;background:var(--surface-2);padding:10px;border-radius:10px;">
+      <div style="width:100%;">
+        <div class="form-label" style="margin-bottom:4px;">일별 메모</div>
+        <input type="text" id="modalMemoInput" maxlength="20" placeholder="메모 입력 (최대 20자)" style="width:100%;" />
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="saveDayOverride()" style="margin-top:12px;">저장하기</button>
+    <button class="btn-outline" onclick="clearDayOverride()">기본 패턴 근무로 되돌리기</button>
+  </div>
+</div>
+
+<script>
+// 2026년부터 2040년까지의 핵심 공휴일 내장 데이터 (고정 공휴일 + 음력 명절 및 주요 대체공휴일)
+const DEFAULT_HOLIDAYS = {
+  // 2026
+  "2026-01-01": "신정", "2026-02-16": "설날연휴", "2026-02-17": "설날", "2026-02-18": "설날연휴",
+  "2026-03-01": "삼일절", "2026-03-02": "대체공휴일", "2026-05-05": "어린이날", "2026-05-24": "부처님오신날",
+  "2026-05-25": "대체공휴일", "2026-06-03": "지방선거", "2026-06-06": "현충일", "2026-08-15": "광복절",
+  "2026-08-17": "대체공휴일", "2026-09-24": "추석연휴", "2026-09-25": "추석", "2026-09-26": "추석연휴",
+  "2026-10-03": "개천절", "2026-10-05": "대체공휴일", "2026-10-09": "한글날", "2026-12-25": "크리스마스",
+  
+  // 2027
+  "2027-01-01": "신정", "2027-02-06": "설날연휴", "2027-02-07": "설날", "2027-02-08": "설날연휴",
+  "2027-02-09": "대체공휴일", "2027-03-01": "삼일절", "2027-05-05": "어린이날", "2027-05-13": "부처님오신날",
+  "2027-06-06": "현충일", "2027-06-07": "대체공휴일", "2027-08-15": "광복절", "2027-08-16": "대체공휴일",
+  "2027-09-14": "추석연휴", "2027-09-15": "추석", "2027-09-16": "추석연휴", "2027-10-03": "개천절",
+  "2027-10-04": "대체공휴일", "2027-10-09": "한글날", "2027-10-11": "대체공휴일", "2027-12-25": "크리스마스",
+
+  // 2028
+  "2028-01-01": "신정", "2028-01-26": "설날연휴", "2028-01-27": "설날", "2028-01-28": "설날연휴",
+  "2028-03-01": "삼일절", "2028-05-02": "부처님오신날", "2028-05-05": "어린이날", "2028-06-06": "현충일",
+  "2028-08-15": "광복절", "2028-10-02": "추석연휴", "2028-10-03": "추석 / 개천절", "2028-10-04": "추석연휴",
+  "2028-10-09": "한글날", "2028-12-25": "크리스마스",
+
+  // 2029
+  "2029-01-01": "신정", "2029-02-12": "설날연휴", "2029-02-13": "설날", "2029-02-14": "설날연휴",
+  "2029-03-01": "삼일절", "2029-05-05": "어린이날", "2029-05-20": "부처님오신날", "2029-05-21": "대체공휴일",
+  "2029-06-06": "현충일", "2029-08-15": "광복절", "2029-09-21": "추석연휴", "2029-09-22": "추석",
+  "2029-09-23": "추석연휴", "2029-09-24": "대체공휴일", "2029-10-03": "개천절", "2029-10-09": "한글날",
+  "2029-12-25": "크리스마스",
+
+  // 2030
+  "2030-01-01": "신정", "2030-02-02": "설날연휴", "2030-02-03": "설날", "2030-02-04": "설날연휴",
+  "2030-02-05": "대체공휴일", "2030-03-01": "삼일절", "2030-05-05": "어린이날", "2030-05-06": "대체공휴일",
+  "2030-05-09": "부처님오신날", "2030-06-06": "현충일", "2030-08-15": "광복절", "2030-09-11": "추석연휴",
+  "2030-09-12": "추석", "2030-09-13": "추석연휴", "2030-10-03": "개천절", "2030-10-09": "한글날",
+  "2030-12-25": "크리스마스",
+
+  // 2031 ~ 2040 주요 고정 공휴일 및 대표 명절
+  "2031-01-01": "신정", "2031-03-01": "삼일절", "2031-05-05": "어린이날", "2031-06-06": "현충일", "2031-08-15": "광복절", "2031-10-03": "개천절", "2031-10-09": "한글날", "2031-12-25": "크리스마스",
+  "2032-01-01": "신정", "2032-03-01": "삼일절", "2032-05-05": "어린이날", "2032-06-06": "현충일", "2032-08-15": "광복절", "2032-10-03": "개천절", "2032-10-09": "한글날", "2032-12-25": "크리스마스",
+  "2033-01-01": "신정", "2033-03-01": "삼일절", "2033-05-05": "어린이날", "2033-06-06": "현충일", "2033-08-15": "광복절", "2033-10-03": "개천절", "2033-10-09": "한글날", "2033-12-25": "크리스마스",
+  "2034-01-01": "신정", "2034-03-01": "삼일절", "2034-05-05": "어린이날", "2034-06-06": "현충일", "2034-08-15": "광복절", "2034-10-03": "개천절", "2034-10-09": "한글날", "2034-12-25": "크리스마스",
+  "2035-01-01": "신정", "2035-03-01": "삼일절", "2035-05-05": "어린이날", "2035-06-06": "현충일", "2035-08-15": "광복절", "2035-10-03": "개천절", "2035-10-09": "한글날", "2035-12-25": "크리스마스",
+  "2036-01-01": "신정", "2036-03-01": "삼일절", "2036-05-05": "어린이날", "2036-06-06": "현충일", "2036-08-15": "광복절", "2036-10-03": "개천절", "2036-10-09": "한글날", "2036-12-25": "크리스마스",
+  "2037-01-01": "신정", "2037-03-01": "삼일절", "2037-05-05": "어린이날", "2037-06-06": "현충일", "2037-08-15": "광복절", "2037-10-03": "개천절", "2037-10-09": "한글날", "2037-12-25": "크리스마스",
+  "2038-01-01": "신정", "2038-03-01": "삼일절", "2038-05-05": "어린이날", "2038-06-06": "현충일", "2038-08-15": "광복절", "2038-10-03": "개천절", "2038-10-09": "한글날", "2038-12-25": "크리스마스",
+  "2039-01-01": "신정", "2039-03-01": "삼일절", "2039-05-05": "어린이날", "2039-06-06": "현충일", "2039-08-15": "광복절", "2039-10-03": "개천절", "2039-10-09": "한글날", "2039-12-25": "크리스마스",
+  "2040-01-01": "신정", "2040-03-01": "삼일절", "2040-05-05": "어린이날", "2040-06-06": "현충일", "2040-08-15": "광복절", "2040-10-03": "개천절", "2040-10-09": "한글날", "2040-12-25": "크리스마스"
+};
+
+const THEME_OPTIONS = [
+  { val: "green", label: "초록" }, { val: "blue", label: "파랑" }, { val: "gray", label: "회색" },
+  { val: "amber", label: "황토" }, { val: "orange", label: "주황" }, { val: "purple", label: "보라" },
+  { val: "pink", label: "분홍" }, { val: "teal", label: "청록" }, { val: "indigo", label: "남색" },
+  { val: "cyan", label: "하늘" }, { val: "red", label: "빨강" }
+];
+
+const DEFAULT_STATE = {
+  startDate: "2026-01-01",
+  pattern: ["주", "야", "심", "휴", "비", "주", "야", "휴", "비", "비"],
+  dailyStd: 8,
+  otCap: 67,
+  hourlyRate: 13500,
+  nightRate: 4500,
+  holidayRate: 95000,
+  codes: {
+    "주": { name: "주간근무", base: 11.0, night: 0.0, theme: "green" },
+    "야": { name: "야간근무", base: 14.0, night: 8.0, theme: "blue" },
+    "심": { name: "심야근무", base: 8.0, night: 8.0, theme: "indigo" },
+    "비": { name: "비번", base: 0.0, night: 0.0, theme: "gray" },
+    "휴": { name: "휴무", base: 0.0, night: 0.0, theme: "gray" },
+    "당": { name: "당직/24h", base: 24.0, night: 8.0, theme: "amber" },
+    "연가": { name: "연가/공가", base: 8.0, night: 0.0, theme: "purple" },
+    "자원": { name: "자원근무", base: 8.0, night: 0.0, theme: "pink" }
+  },
+  holidays: JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS)),
+  overrides: {}
+};
+
+// 인앱 브라우저 안전 스토리지 래퍼
+const safeStorage = {
+  mem: {},
+  getItem(k) {
+    try { return window.localStorage.getItem(k); } catch (e) { return this.mem[k] || null; }
+  },
+  setItem(k, v) {
+    try { window.localStorage.setItem(k, v); } catch (e) { this.mem[k] = v; }
+  },
+  clear() {
+    try { window.localStorage.clear(); } catch (e) { this.mem = {}; }
+  }
+};
+
+let state = loadState();
+let viewYear = new Date().getFullYear();
+let viewMonth = new Date().getMonth() + 1;
+let selectedDateKey = null;
+let tempModalCode = null;
+
+function loadState() {
+  try {
+    const raw = safeStorage.getItem("shift_plus_minus_v20") ||
+                safeStorage.getItem("shift_plus_minus_v19") ||
+                safeStorage.getItem("shift_plus_minus_v17") ||
+                safeStorage.getItem("shift_plus_minus_v16");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const mergedCodes = parsed.codes && typeof parsed.codes === "object"
+        ? parsed.codes
+        : JSON.parse(JSON.stringify(DEFAULT_STATE.codes));
+
+      Object.keys(mergedCodes).forEach(k => {
+        if (!mergedCodes[k].theme) mergedCodes[k].theme = "gray";
+        if (typeof mergedCodes[k].base !== "number") mergedCodes[k].base = Number(mergedCodes[k].base) || 0;
+        if (typeof mergedCodes[k].night !== "number") mergedCodes[k].night = Number(mergedCodes[k].night) || 0;
+      });
+
+      return {
+        ...DEFAULT_STATE,
+        ...parsed,
+        pattern: Array.isArray(parsed.pattern) && parsed.pattern.length > 0 ? parsed.pattern : [...DEFAULT_STATE.pattern],
+        codes: mergedCodes,
+        holidays: parsed.holidays && typeof parsed.holidays === "object" ? { ...JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS)), ...parsed.holidays } : JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS)),
+        overrides: parsed.overrides && typeof parsed.overrides === "object" ? parsed.overrides : {}
+      };
+    }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+
+function persistState() {
+  try {
+    safeStorage.setItem("shift_plus_minus_v20", JSON.stringify(state));
+  } catch (e) {}
+}
+
+function initTheme() {
+  const savedTheme = safeStorage.getItem("shift_calc_theme");
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+    document.body.classList.add("dark-mode");
+    updateThemeBtnText(true);
+  } else {
+    document.body.classList.remove("dark-mode");
+    updateThemeBtnText(false);
+  }
+}
+
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle("dark-mode");
+  safeStorage.setItem("shift_calc_theme", isDark ? "dark" : "light");
+  updateThemeBtnText(isDark);
+  renderCalendar();
+}
+
+function updateThemeBtnText(isDark) {
+  const btn = document.getElementById("themeToggleBtn");
+  if (btn) btn.textContent = isDark ? "☀️ 라이트" : "🌙 다크";
+}
+
+function getThemeClass(code) {
+  const theme = (state.codes[code] && state.codes[code].theme) ? state.codes[code].theme : "gray";
+  return `theme-${theme}`;
+}
+
+function formatDateKey(y, m, d) {
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+function parseLocalDate(str) {
+  const parts = (str || "2026-01-01").split("-").map(Number);
+  return new Date(parts[0] || 2026, (parts[1] || 1) - 1, parts[2] || 1);
+}
+
+function getPatternCodeForDate(dateObj) {
+  if (!state.pattern || state.pattern.length === 0) return Object.keys(state.codes)[0] || "휴";
+  const base = parseLocalDate(state.startDate);
+  const diffDays = Math.round((dateObj - base) / 86400000);
+  const len = state.pattern.length;
+  const idx = ((diffDays % len) + len) % len;
+  return state.pattern[idx];
+}
+
+function calculateMonthStats(year, month) {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const dailyStd = Number(state.dailyStd || 8);
+  let weekdays = 0;
+
+  let basePatternTotalHours = 0;
+  let basePatternHolidayDays = 0;
+  let totalActualHours = 0;
+  let nightHours = 0;
+  let holidayWorkDays = 0;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dt = new Date(year, month - 1, d);
+    const dow = dt.getDay();
+    const key = formatDateKey(year, month, d);
+    const isHoliday = Boolean(state.holidays[key]);
+    const isWeekendOrHol = (dow === 0 || dow === 6 || isHoliday);
+
+    if (!isWeekendOrHol) weekdays++;
+
+    const defaultCode = getPatternCodeForDate(dt);
+    const defCodeInfo = state.codes[defaultCode] || { base: 0, night: 0 };
+    const defBase = Number(defCodeInfo.base || 0);
+    const defNight = Number(defCodeInfo.night || 0);
+
+    basePatternTotalHours += defBase;
+    if (isWeekendOrHol && defBase > 0 && defaultCode !== "연가" && defNight === 0) {
+      if (defBase >= dailyStd) basePatternHolidayDays++;
+    }
+
+    const ov = state.overrides[key];
+    const activeCode = (ov && ov.code && state.codes[ov.code]) ? ov.code : defaultCode;
+    const extra = (ov && ov.extra) ? Number(ov.extra) : 0;
+
+    const codeInfo = state.codes[activeCode] || { base: 0, night: 0 };
+    const dayBase = Number(codeInfo.base || 0);
+    const dayNight = Number(codeInfo.night || 0);
+    const dayTotal = dayBase + extra;
+
+    totalActualHours += dayTotal;
+    nightHours += dayNight;
+
+    if (isWeekendOrHol) {
+      if (dayTotal > 0 && activeCode !== "연가" && dayNight === 0) {
+        if (dayTotal >= dailyStd) holidayWorkDays++;
+      }
+    }
+  }
+
+  const legalHours = weekdays * dailyStd;
+  const basePatternHolDedHours = basePatternHolidayDays * dailyStd;
+  // 휴일공제까지 반영된 실질 기본근무 시간 계산
+  const netBasePatternHours = basePatternTotalHours - basePatternHolDedHours;
+  const diff = netBasePatternHours - legalHours;
+
+  const holidayDedHours = holidayWorkDays * dailyStd;
+  const otCap = Number(state.otCap || 67);
+  const rawOtHours = Math.max(0, totalActualHours - legalHours - holidayDedHours);
+  const paidOtHours = Math.min(rawOtHours, otCap);
+
+  const otPay = Math.round(paidOtHours * Number(state.hourlyRate || 0));
+  const nightPay = Math.round(nightHours * Number(state.nightRate || 0));
+  const holidayPay = Math.round(holidayWorkDays * Number(state.holidayRate || 0));
+  const totalPay = otPay + nightPay + holidayPay;
+
+  return {
+    daysInMonth, weekdays, legalHours, basePatternTotalHours, basePatternHolDedHours,
+    netBasePatternHours, totalActualHours, holidayDedHours, nightHours, holidayWorkDays, diff,
+    rawOtHours, paidOtHours, otCap, otPay, nightPay, holidayPay, totalPay
+  };
+}
+
+function renderCalendar() {
+  document.getElementById("currentMonthLabel").textContent = `${viewYear}년 ${viewMonth}월`;
+  document.getElementById("headerPatternInfo").textContent =
+    `패턴: ${state.pattern.join(" → ") || "미설정"} (${state.pattern.length}일 주기)`;
+
+  const stats = calculateMonthStats(viewYear, viewMonth);
+
+  // "기본근무 - 법정기준" 형태로 심플하게 표시 (휴일공제 반영된 netBasePatternHours 사용)
+  document.getElementById("patternHoursVal").textContent = `${stats.netBasePatternHours.toFixed(1)}h`;
+  document.getElementById("legalHoursVal").textContent = `${stats.legalHours.toFixed(1)}h`;
+
+  const statusLabelEl = document.getElementById("monthStatusLabel");
+  const diffValEl = document.getElementById("monthDiffValue");
+  const sign = stats.diff > 0 ? "+" : "";
+  diffValEl.textContent = `${sign}${stats.diff.toFixed(1)}h`;
+
+  if (stats.diff > 0.01) {
+    statusLabelEl.textContent = "플러스달";
+    diffValEl.className = "c-val text-plus";
+  } else if (stats.diff < -0.01) {
+    statusLabelEl.textContent = "마이너스달";
+    diffValEl.className = "c-val text-minus";
+  } else {
+    statusLabelEl.textContent = "기준일치";
+    diffValEl.className = "c-val";
+  }
+
+  const netActualHours = stats.totalActualHours - stats.holidayDedHours;
+  document.getElementById("actualHoursVal").textContent = `${netActualHours.toFixed(1)}h`;
+  document.getElementById("nightHolidayVal").textContent = `${stats.nightHours.toFixed(1)}h / ${stats.holidayWorkDays}일`;
+
+  const pct = Math.min(100, Math.round((stats.rawOtHours / stats.otCap) * 100));
+  const remain = Math.max(0, stats.otCap - stats.rawOtHours);
+  document.getElementById("capText").textContent = `${stats.rawOtHours.toFixed(1)} / ${stats.otCap}h`;
+  document.getElementById("capRemainText").textContent = stats.rawOtHours >= stats.otCap ? "상한 달성!" : `잔여 ${remain.toFixed(1)}h`;
+  const fillEl = document.getElementById("capBarFill");
+  fillEl.style.width = `${pct}%`;
+  fillEl.classList.toggle("full", stats.rawOtHours >= stats.otCap);
+
+  document.getElementById("otPaidHours").textContent = `${stats.paidOtHours.toFixed(1)}h`;
+  document.getElementById("otPayVal").textContent = `${stats.otPay.toLocaleString()}원`;
+  document.getElementById("nightPaidHours").textContent = `${stats.nightHours.toFixed(1)}h`;
+  document.getElementById("nightPayVal").textContent = `${stats.nightPay.toLocaleString()}원`;
+  document.getElementById("holPaidDays").textContent = `${stats.holidayWorkDays}일`;
+  document.getElementById("holPayVal").textContent = `${stats.holidayPay.toLocaleString()}원`;
+  document.getElementById("totalPayVal").textContent = `${stats.totalPay.toLocaleString()}원`;
+
+  const grid = document.getElementById("calendarGrid");
+  grid.innerHTML = "";
+
+  const firstDow = new Date(viewYear, viewMonth - 1, 1).getDay();
+  for (let i = 0; i < firstDow; i++) {
+    const empty = document.createElement("div");
+    empty.className = "day-cell empty";
+    grid.appendChild(empty);
+  }
+
+  const now = new Date();
+  const todayKey = formatDateKey(now.getFullYear(), now.getMonth() + 1, now.getDate());
+
+  for (let d = 1; d <= stats.daysInMonth; d++) {
+    const dt = new Date(viewYear, viewMonth - 1, d);
+    const dow = dt.getDay();
+    const key = formatDateKey(viewYear, viewMonth, d);
+    const isHoliday = Boolean(state.holidays[key]);
+    const defaultCode = getPatternCodeForDate(dt);
+    const ov = state.overrides[key];
+    const activeCode = (ov && ov.code && state.codes[ov.code]) ? ov.code : defaultCode;
+    const extra = (ov && ov.extra) ? Number(ov.extra) : 0;
+    const memo = (ov && ov.memo) ? ov.memo.trim() : "";
+
+    const cell = document.createElement("div");
+    cell.className = "day-cell";
+    if (key === todayKey) cell.classList.add("today");
+    
+    const isModified = ov && (ov.code !== defaultCode || extra > 0 || memo !== "");
+    if (isModified) cell.classList.add("overridden");
+
+    cell.onclick = () => openDayModal(key, dt, defaultCode);
+
+    const numSpan = document.createElement("div");
+    numSpan.className = "day-num";
+    if (dow === 0 || isHoliday) numSpan.classList.add("day-sun");
+    else if (dow === 6) numSpan.classList.add("day-sat");
+    numSpan.textContent = d;
+
+    const pillWrapper = document.createElement("div");
+    pillWrapper.className = "shift-pill-wrapper";
+
+    const pill = document.createElement("div");
+    pill.className = `shift-pill ${getThemeClass(activeCode)}`;
+    pill.textContent = activeCode;
+    pillWrapper.appendChild(pill);
+
+    if (isModified) {
+      const dot = document.createElement("div");
+      dot.className = "edit-badge-dot";
+      pillWrapper.appendChild(dot);
+    }
+
+    const bottomRow = document.createElement("div");
+    bottomRow.className = "day-bottom-row";
+
+    if (extra > 0) {
+      const tag = document.createElement("div");
+      tag.className = "extra-tag";
+      tag.textContent = `+${extra}h`;
+      bottomRow.appendChild(tag);
+    } else if (memo !== "") {
+      const mTag = document.createElement("div");
+      mTag.className = "memo-tag";
+      mTag.textContent = memo;
+      bottomRow.appendChild(mTag);
+    } else if (isHoliday) {
+      const tag = document.createElement("div");
+      tag.className = "extra-tag";
+      tag.style.color = "var(--red)";
+      tag.textContent = String(state.holidays[key]).slice(0, 3);
+      bottomRow.appendChild(tag);
+    } else {
+      bottomRow.innerHTML = "&nbsp;";
+    }
+
+    cell.appendChild(numSpan);
+    cell.appendChild(pillWrapper);
+    cell.appendChild(bottomRow);
+    grid.appendChild(cell);
+  }
+}
+
+function renderAnnual() {
+  document.getElementById("annualTitle").textContent = `${viewYear}년 연간 요약`;
+  const list = document.getElementById("annualList");
+  list.innerHTML = "";
+
+  for (let m = 1; m <= 12; m++) {
+    const st = calculateMonthStats(viewYear, m);
+    const row = document.createElement("div");
+    row.className = "annual-row";
+    row.onclick = () => {
+      viewMonth = m;
+      switchTab("calendar");
+    };
+
+    const isPlus = st.diff > 0.01;
+    const isMinus = st.diff < -0.01;
+    const label = isPlus ? "플러스달" : isMinus ? "마이너스달" : "일치";
+    const diffClass = isPlus ? "text-plus" : isMinus ? "text-minus" : "";
+    const sign = st.diff > 0 ? "+" : "";
+
+    row.innerHTML = `
+      <div>
+        <div style="font-size:14px;font-weight:800;">${m}월 <span style="font-size:11px;font-weight:600;color:var(--text-muted);">(${label})</span></div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">예상 수당: 약 ${Math.round(st.totalPay / 10000)}만원</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="${diffClass}" style="font-size:15px;font-weight:900;">${sign}${st.diff.toFixed(1)}h</div>
+        <div style="font-size:10px;color:var(--text-muted); line-height: 1.4;">실제초과 ${st.paidOtHours.toFixed(1)}h · 야간 ${st.nightHours.toFixed(1)}h · 휴일근무 ${st.holidayWorkDays}일</div>
+      </div>
+    `;
+    list.appendChild(row);
+  }
+}
+
+function renderSettings() {
+  document.getElementById("startDateInput").value = state.startDate;
+  document.getElementById("dailyStdInput").value = state.dailyStd;
+  document.getElementById("otCapInput").value = state.otCap;
+  document.getElementById("hourlyRateInput").value = state.hourlyRate;
+  document.getElementById("nightRateInput").value = state.nightRate;
+  document.getElementById("holidayRateInput").value = state.holidayRate;
+  document.getElementById("patternLenText").textContent = state.pattern.length;
+
+  const slots = document.getElementById("patternSlots");
+  slots.innerHTML = "";
+  state.pattern.forEach((code, idx) => {
+    const chip = document.createElement("div");
+    chip.className = `slot-chip ${getThemeClass(code)}`;
+    chip.innerHTML = `<span class="idx">${idx + 1}</span>${code} ✕`;
+    chip.onclick = () => {
+      if (state.pattern.length > 1) {
+        state.pattern.splice(idx, 1);
+        persistState();
+        renderSettings();
+      } else {
+        alert("최소 1개 이상의 근무가 패턴에 있어야 합니다.");
+      }
+    };
+    slots.appendChild(chip);
+  });
+
+  const addBtnsContainer = document.getElementById("patternAddBtns");
+  addBtnsContainer.innerHTML = "";
+  Object.keys(state.codes).forEach(code => {
+    const btn = document.createElement("button");
+    btn.className = `add-btn ${getThemeClass(code)}`;
+    btn.textContent = `+ ${code}`;
+    btn.onclick = () => addPatternStep(code);
+    addBtnsContainer.appendChild(btn);
+  });
+
+  const cardsList = document.getElementById("codeCardsList");
+  cardsList.innerHTML = "";
+  Object.keys(state.codes).forEach(code => {
+    const info = state.codes[code];
+    const card = document.createElement("div");
+    card.className = "code-item-card";
+    const themeOpts = THEME_OPTIONS.map(opt => `<option value="${opt.val}" ${info.theme === opt.val ? "selected" : ""}>${opt.label}</option>`).join("");
+    card.innerHTML = `
+      <div class="code-item-top">
+        <span class="shift-pill ${getThemeClass(code)}" style="width:auto;min-width:44px;padding:4px 8px;font-size:12px;">${code}</span>
+        <input type="text" value="${info.name}" maxlength="12" style="flex:1;min-width:90px;" onchange="updateCodeProp('${code}','name',this.value)" />
+        <select onchange="updateCodeProp('${code}','theme',this.value)" style="width:68px;padding:6px 4px;font-size:12px;">${themeOpts}</select>
+        ${Object.keys(state.codes).length > 1 ? `<button class="del-code-btn" onclick="deleteWorkCode('${code}')">삭제</button>` : ""}
+      </div>
+      <div class="code-item-bottom">
+        <div style="display:flex;align-items:center;gap:4px;"><span style="color:var(--text-muted);">기본:</span><input type="number" step="0.5" value="${info.base}" style="width:64px;" onchange="updateCodeProp('${code}','base',this.value)" /><span>h</span></div>
+        <div style="display:flex;align-items:center;gap:4px;"><span style="color:var(--text-muted);">야간:</span><input type="number" step="0.5" value="${info.night}" style="width:64px;" onchange="updateCodeProp('${code}','night',this.value)" /><span>h</span></div>
+      </div>
+    `;
+    cardsList.appendChild(card);
+  });
+
+  renderHolidayTree();
+}
+
+// 연도별 트리(아코디언) 형태로 공휴일 관리 렌더링
+function renderHolidayTree() {
+  const container = document.getElementById("holidayTreeContainer");
+  container.innerHTML = "";
+
+  const sortedDates = Object.keys(state.holidays).sort();
+  if (sortedDates.length === 0) {
+    container.innerHTML = `<div style="padding:14px;text-align:center;font-size:12px;color:var(--text-muted);">등록된 공휴일이 없습니다.</div>`;
+    return;
+  }
+
+  // 연도별로 그룹화
+  const grouped = {};
+  sortedDates.forEach(dateStr => {
+    const y = dateStr.slice(0, 4);
+    if (!grouped[y]) grouped[y] = [];
+    grouped[y].push({ date: dateStr, name: state.holidays[dateStr] });
+  });
+
+  const currentYearStr = String(viewYear);
+
+  Object.keys(grouped).sort().forEach(year => {
+    const holidaysInYear = grouped[year];
+    const isOpen = (year === currentYearStr);
+
+    const accordionItem = document.createElement("div");
+    accordionItem.className = "year-accordion-item";
+
+    const header = document.createElement("div");
+    header.className = "year-accordion-header";
+    header.innerHTML = `<span>📅 ${year}년 (<span style="color:var(--primary);">${holidaysInYear.length}개</span>)</span><span>${isOpen ? '▲ 접기' : '▼ 펼치기'}</span>`;
+    
+    const body = document.createElement("div");
+    body.className = `year-accordion-body ${isOpen ? 'open' : ''}`;
+
+    header.onclick = () => {
+      const isOpenNow = body.classList.contains("open");
+      body.classList.toggle("open", !isOpenNow);
+      header.lastChild.textContent = !isOpenNow ? '▲ 접기' : '▼ 펼치기';
+    };
+
+    holidaysInYear.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "holiday-item";
+      row.innerHTML = `
+        <input type="date" class="holiday-date-input" value="${item.date}" onchange="updateHolidayDate('${item.date}', this.value)" />
+        <input type="text" class="holiday-name-input" value="${item.name}" maxlength="12" onchange="updateHolidayName('${item.date}', this.value)" />
+        <button class="holiday-del-btn" onclick="deleteHoliday('${item.date}')">삭제</button>
+      `;
+      body.appendChild(row);
+    });
+
+    accordionItem.appendChild(header);
+    accordionItem.appendChild(body);
+    container.appendChild(accordionItem);
+  });
+}
+
+function addHoliday() {
+  const dateInput = document.getElementById("newHolDate");
+  const nameInput = document.getElementById("newHolName");
+  if (!dateInput.value || !nameInput.value.trim()) {
+    alert("날짜와 공휴일 명칭을 입력해 주세요.");
+    return;
+  }
+  state.holidays[dateInput.value] = nameInput.value.trim();
+  dateInput.value = "";
+  nameInput.value = "";
+  persistState();
+  renderHolidayTree();
+}
+
+function updateHolidayDate(oldDate, newDate) {
+  if (!newDate || oldDate === newDate) return;
+  state.holidays[newDate] = state.holidays[oldDate];
+  delete state.holidays[oldDate];
+  persistState();
+  renderHolidayTree();
+}
+
+function updateHolidayName(dateStr, newName) {
+  if (!newName.trim()) return;
+  state.holidays[dateStr] = newName.trim();
+  persistState();
+}
+
+function deleteHoliday(dateStr) {
+  if (!confirm(`'${dateStr}' 공휴일을 삭제할까요?`)) return;
+  delete state.holidays[dateStr];
+  persistState();
+  renderHolidayTree();
+}
+
+function resetHolidaysOnly() {
+  if (confirm("공휴일 목록을 2026~2040년 기본값으로 복원할까요?")) {
+    state.holidays = JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS));
+    persistState();
+    renderHolidayTree();
+  }
+}
+
+function updateCodeProp(code, field, val) {
+  if (!state.codes[code]) return;
+  state.codes[code][field] = (field === "base" || field === "night") ? (Number(val) || 0) : (val.trim() || code);
+  persistState();
+  renderSettings();
+}
+
+function addNewWorkCode() {
+  const keyInput = document.getElementById("newCodeKey");
+  const nameInput = document.getElementById("newCodeName");
+  const themeInput = document.getElementById("newCodeTheme");
+  const baseInput = document.getElementById("newCodeBase");
+  const nightInput = document.getElementById("newCodeNight");
+  const key = keyInput.value.trim();
+
+  if (!key || state.codes[key]) {
+    alert("올바르거나 중복되지 않은 약어를 입력해 주세요.");
+    return;
+  }
+  state.codes[key] = {
+    name: nameInput.value.trim() || key,
+    base: Number(baseInput.value) || 0,
+    night: Number(nightInput.value) || 0,
+    theme: themeInput.value
+  };
+  keyInput.value = "";
+  nameInput.value = "";
+  persistState();
+  renderSettings();
+}
+
+function deleteWorkCode(code) {
+  if (Object.keys(state.codes).length <= 1) return;
+  if (!confirm(`'${code}' 코드를 삭제할까요?`)) return;
+  delete state.codes[code];
+  const fallback = Object.keys(state.codes)[0];
+  state.pattern = state.pattern.map(p => p === code ? fallback : p);
+  persistState();
+  renderSettings();
+}
+
+function applyPreset(arr) {
+  state.pattern = [...arr];
+  persistState();
+  renderSettings();
+}
+
+function addPatternStep(code) {
+  if (state.pattern.length >= 21) return;
+  state.pattern.push(code);
+  persistState();
+  renderSettings();
+}
+
+function clearPattern() {
+  state.pattern = [Object.keys(state.codes)[0] || "주"];
+  persistState();
+  renderSettings();
+}
+
+function saveSettings() {
+  state.startDate = document.getElementById("startDateInput").value || "2026-01-01";
+  state.dailyStd = Number(document.getElementById("dailyStdInput").value) || 8;
+  state.otCap = Number(document.getElementById("otCapInput").value) || 67;
+  state.hourlyRate = Number(document.getElementById("hourlyRateInput").value) || 0;
+  state.nightRate = Number(document.getElementById("nightRateInput").value) || 0;
+  state.holidayRate = Number(document.getElementById("holidayRateInput").value) || 0;
+  persistState();
+}
+
+function resetCurrentMonthOverrides() {
+  const prefix = `${viewYear}-${String(viewMonth).padStart(2, "0")}-`;
+  if (!confirm(`${viewYear}년 ${viewMonth}월 수정 내역을 초기화할까요?`)) return;
+  Object.keys(state.overrides).forEach(k => { if (k.startsWith(prefix)) delete state.overrides[k]; });
+  persistState();
+  renderCalendar();
+}
+
+async function clearCacheAndReload() {
+  if (!confirm("모든 캐시와 데이터를 초기화하고 새로고침할까요?")) return;
+  safeStorage.clear();
+  try { sessionStorage.clear(); } catch (e) {}
+  try {
+    if ("caches" in window) {
+      const names = await caches.keys();
+      await Promise.all(names.map(n => caches.delete(n)));
+    }
+  } catch (e) {}
+  state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  persistState();
+  renderCalendar();
+  if (document.getElementById("view-settings").classList.contains("active")) renderSettings();
+  if (document.getElementById("view-annual").classList.contains("active")) renderAnnual();
+}
+
+function openDayModal(key, dt, defaultCode) {
+  selectedDateKey = key;
+  const dowNames = ["일", "월", "화", "수", "목", "금", "토"];
+  const isHol = Boolean(state.holidays[key]);
+  const holText = isHol ? ` · ${state.holidays[key]}` : "";
+  document.getElementById("modalDateTitle").textContent =
+    `${dt.getFullYear()}년 ${dt.getMonth() + 1}월 ${dt.getDate()}일 (${dowNames[dt.getDay()]})${holText}`;
+  document.getElementById("modalDefaultInfo").textContent =
+    `기본 패턴: ${defaultCode} (${(state.codes[defaultCode] && state.codes[defaultCode].name) || ""})`;
+
+  // 모달 내 공휴일 토글 상태 업데이트
+  updateModalHolidayUI(key);
+
+  const ov = state.overrides[key];
+  tempModalCode = (ov && ov.code && state.codes[ov.code]) ? ov.code : defaultCode;
+  document.getElementById("modalExtraHours").value = (ov && ov.extra) ? ov.extra : 0;
+  document.getElementById("modalMemoInput").value = (ov && ov.memo) ? ov.memo : "";
+
+  renderModalChoices();
+  updateQuickOtHint();
+  document.getElementById("dayModal").classList.add("open");
+}
+
+function updateModalHolidayUI(key) {
+  const isHol = Boolean(state.holidays[key]);
+  const statusText = document.getElementById("modalHolidayStatusText");
+  const subText = document.getElementById("modalHolidayNameSub");
+  const toggleBtn = document.getElementById("modalHolidayToggleBtn");
+
+  if (isHol) {
+    statusText.textContent = `🔴 공휴일 (${state.holidays[key]})`;
+    subText.textContent = "현재 공휴일로 지정되어 있습니다.";
+    toggleBtn.textContent = "공휴일 해제";
+    toggleBtn.style.background = "var(--red-bg)";
+    toggleBtn.style.color = "var(--red)";
+  } else {
+    statusText.textContent = "⚪ 일반일 (공휴일 아님)";
+    subText.textContent = "공휴일로 지정하면 주말/휴일 수당 산정에 반영됩니다.";
+    toggleBtn.textContent = "공휴일 지정";
+    toggleBtn.style.background = "var(--primary-bg)";
+    toggleBtn.style.color = "var(--primary)";
+  }
+}
+
+function toggleModalHoliday() {
+  if (!selectedDateKey) return;
+  const isHol = Boolean(state.holidays[selectedDateKey]);
+  if (isHol) {
+    delete state.holidays[selectedDateKey];
+  } else {
+    state.holidays[selectedDateKey] = "지정공휴일";
+  }
+  persistState();
+  updateModalHolidayUI(selectedDateKey);
+  renderCalendar();
+}
+
+function renderModalChoices() {
+  const container = document.getElementById("modalCodeChoices");
+  container.innerHTML = "";
+  Object.keys(state.codes).forEach(code => {
+    const info = state.codes[code];
+    const btn = document.createElement("button");
+    btn.className = `choice-btn ${getThemeClass(code)} ${tempModalCode === code ? "selected" : ""}`;
+    btn.innerHTML = `<div>${code}</div><div style="font-size:10px;margin-top:1px;">${info.name}</div>`;
+    btn.onclick = () => { tempModalCode = code; renderModalChoices(); updateQuickOtHint(); };
+    container.appendChild(btn);
+  });
+}
+
+function setExtraTime(h) {
+  document.getElementById("modalExtraHours").value = h;
+  syncExtraChipState();
+}
+
+function syncExtraChipState() {
+  const cur = Number(document.getElementById("modalExtraHours").value) || 0;
+  document.querySelectorAll(".quick-ot-chip").forEach(chip => {
+    const val = Number(chip.textContent.replace("+", "").replace("h", ""));
+    chip.classList.toggle("selected", val === cur);
+  });
+  updateQuickOtHint();
+}
+
+function updateQuickOtHint() {
+  const info = state.codes[tempModalCode] || { base: 0, name: tempModalCode };
+  const extra = Number(document.getElementById("modalExtraHours").value) || 0;
+  document.getElementById("quickOtTitle").textContent = `⏱️ ${tempModalCode} (${info.name}) 추가시간`;
+  document.getElementById("quickOtCurrentHint").textContent = `기본 ${info.base}h + 추가 ${extra}h = 총 ${info.base + extra}h`;
+}
+
+function saveDayOverride() {
+  if (!selectedDateKey) return;
+  const extra = Number(document.getElementById("modalExtraHours").value) || 0;
+  const memo = document.getElementById("modalMemoInput").value.trim();
+  const defaultCode = getPatternCodeForDate(parseLocalDate(selectedDateKey));
+
+  if (tempModalCode === defaultCode && extra === 0 && memo === "") {
+    delete state.overrides[selectedDateKey];
+  } else {
+    state.overrides[selectedDateKey] = { code: tempModalCode, extra, memo };
+  }
+  persistState();
+  closeModal();
+  renderCalendar();
+}
+
+function clearDayOverride() {
+  if (!selectedDateKey) return;
+  delete state.overrides[selectedDateKey];
+  persistState();
+  closeModal();
+  renderCalendar();
+}
+
+function closeModal(e) {
+  if (!e || e.target.id === "dayModal") document.getElementById("dayModal").classList.remove("open");
+}
+
+function changeMonth(delta) {
+  viewMonth += delta;
+  if (viewMonth > 12) { viewMonth = 1; viewYear++; }
+  else if (viewMonth < 1) { viewMonth = 12; viewYear--; }
+  if (document.getElementById("view-calendar").classList.contains("active")) renderCalendar();
+  else if (document.getElementById("view-annual").classList.contains("active")) renderAnnual();
+}
+
+function goToday() {
+  const now = new Date();
+  viewYear = now.getFullYear();
+  viewMonth = now.getMonth() + 1;
+  switchTab("calendar");
+}
+
+function switchTab(tabName) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(`view-${tabName}`).classList.add("active");
+  document.getElementById(`tab-${tabName}`).classList.add("active");
+  document.getElementById("monthNavBar").style.display = tabName === "settings" ? "none" : "flex";
+
+  if (tabName === "calendar") renderCalendar();
+  if (tabName === "annual") renderAnnual();
+  if (tabName === "settings") renderSettings();
+}
+
+initTheme();
+renderCalendar();
+</script>
+</body>
+</html>
